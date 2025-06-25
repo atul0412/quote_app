@@ -1,39 +1,23 @@
-const express = require('express');
-const { ApolloServer } = require('@apollo/server');
-const { expressMiddleware } = require('@as-integrations/express5');
-const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/drainHttpServer');
-const http = require('http');
-const cors = require('cors');
-const { Quotes, Users } = require('./fakeDB');
-
-
-// The GraphQL schema
-const typeDefs = `#graphql
-  type Query {
-    users:[User]
-    quote:[Quote] 
-  }
-    type User {
-    id: ID!
-    name: String
-    email: String
-    }
-    type Quote {
-    text:String,
-    by:ID!
-}
-`
-
-// A map of functions which return data for the schema.
-const resolvers = {
-  Query: {
-    users:()=> Users,
-    quote:()=> Quotes
-  },
-};
+require("dotenv").config();
+const express = require("express");
+const { ApolloServer } = require("@apollo/server");
+const { expressMiddleware } = require("@as-integrations/express5");
+const {
+  ApolloServerPluginDrainHttpServer,
+} = require("@apollo/server/plugin/drainHttpServer");
+const http = require("http");
+const cors = require("cors");
+const typeDefs = require("./graphQL/Schema");
+const resolvers = require("./graphQL/resolver");
+const connectDB = require("./config/db");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const httpServer = http.createServer(app);
+
+// connecting MoangoDB
+
+connectDB();
 
 // Set up Apollo Server
 const server = new ApolloServer({
@@ -45,14 +29,29 @@ const server = new ApolloServer({
 async function startServer() {
   await server.start();
 
-  app.use(
+    app.use(
     cors(),
     express.json(),
-    expressMiddleware(server),
+    expressMiddleware(server, { context: async ({ req }) => {
+        const authHeader = req.headers.authorization || "";
+        if (authHeader) {
+          try {
+            const { userId } = jwt.verify(authHeader, process.env.JWT_SECRET);
+            return { userId };
+          } catch (err) {
+            console.error("Invalid or expired token", err);
+            return {};
+          }
+        }
+        return {};
+      },
+    })
   );
 
-  await new Promise((resolve) => httpServer.listen({ port: 8000 }, resolve));
-  console.log(`🚀 Server ready at http://localhost:8000`);
+  const PORT = process.env.PORT || 8000;
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}/graphql`);
+  });
 }
 
 startServer();

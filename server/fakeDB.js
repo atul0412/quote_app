@@ -1,3 +1,5 @@
+const { text } = require("express");
+
 const Users = [
     { id: '0412',
         name: 'John',
@@ -19,6 +21,10 @@ const Quotes =[
     { 
         text: 'This is another quote',
         by: "0413"
+    }, 
+    { 
+        text: 'name is NAME',
+        by: "0412"
     }
 ];
 
