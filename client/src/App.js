@@ -1,8 +1,18 @@
-
+import './App.css';
+import Navbar from './components/navbar'
+import {routes} from './routes'
+import {useRoutes} from 'react-router-dom'
 
 function App() {
+  const element = useRoutes(routes)
   return (
-    <h1>hello guys</h1>
+    <div>
+
+     <Navbar/>
+     {element}
+
+    </div>
+
   )
 }
 
