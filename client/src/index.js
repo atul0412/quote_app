@@ -3,10 +3,34 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloProvider,
+  createHttpLink
+} from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 
-const client = new ApolloClient({
+// Create an HTTP link to your server
+const httpLink = createHttpLink({
   uri: "http://localhost:8000/graphql",
+});
+
+// Middleware to add token to headers dynamically
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem("token");
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : "",
+    },
+  };
+});
+
+
+// Create ApolloClient using authLink + httpLink
+const client = new ApolloClient({
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 });
 

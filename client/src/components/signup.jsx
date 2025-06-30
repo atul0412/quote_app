@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from '@apollo/client';
 import { SIGNUP_USER } from '../GraphQL/mutation';
 
 export default function Signup() {
-  const [formData, setFormData] = useState({});
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [success, setSuccess] = useState(false);
   const [signupUser, { data, loading, error }] = useMutation(SIGNUP_USER);
-  if(loading) return<h2>Loading</h2>
 
   const handleChange = (e) => {
     setFormData({
@@ -28,19 +29,31 @@ export default function Signup() {
     }
   };
 
+  useEffect(() => {
+    if (data) {
+      setSuccess(true);
+      setFormData({ name: "", email: "", password: "" });
+      const timer = setTimeout(() => {
+        setSuccess(false);
+        navigate("/login");
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [data, navigate]);
+
   return (
     <div className='container my-container'>
-      {/* Show clean error message */}
+      {loading && <h2>Loading...</h2>}
+
       {error && (
         <div className='red card-panel'>
-          {error.graphQLErrors?.[0]?.message || "user already exist"}
+          {error.graphQLErrors?.[0]?.message || "User already exists"}
         </div>
       )}
 
-      {/* Show success message */}
-      {data && data.signupUser && (
+      {success && (
         <div className='green card-panel'>
-          {data.signupUser.name} is signed up. You can login now.
+          Signup successful! Redirecting to login...
         </div>
       )}
 
@@ -50,6 +63,7 @@ export default function Signup() {
           type="text"
           placeholder="name"
           name="name"
+          value={formData.name}
           onChange={handleChange}
           required
         />
@@ -57,6 +71,7 @@ export default function Signup() {
           type="email"
           placeholder="email"
           name="email"
+          value={formData.email}
           onChange={handleChange}
           required
         />
@@ -64,6 +79,7 @@ export default function Signup() {
           type="password"
           placeholder="password"
           name="password"
+          value={formData.password}
           onChange={handleChange}
           required
         />

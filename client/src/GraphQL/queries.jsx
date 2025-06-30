@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 
 export const GET_ALL_QUOTES = gql`
-   query Query {
+   query getAllQuotes {
         quotes {
             text
             author {
@@ -20,3 +20,15 @@ export const GET_QUOTE_BY_ID = gql`
         }
     }
 `;
+
+export const GET_MY_PROFILE = gql`
+    query getMyProfile{
+        user:myProfile{
+            name
+            email
+            quotes{
+                text
+            }
+       }
+} 
+`

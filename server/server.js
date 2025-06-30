@@ -32,19 +32,19 @@ async function startServer() {
     app.use(
     cors(),
     express.json(),
-    expressMiddleware(server, { context: async ({ req }) => {
-        const authHeader = req.headers.authorization || "";
-        if (authHeader) {
-          try {
-            const { userId } = jwt.verify(authHeader, process.env.JWT_SECRET);
-            return { userId };
-          } catch (err) {
-            console.error("Invalid or expired token", err);
-            return {};
-          }
-        }
-        return {};
-      },
+    expressMiddleware(server, {  context: ({ req }) => {
+    const auth = req.headers.authorization || "";
+    const token = auth.split(" ")[1]; // "Bearer <token>"
+    if (token) {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        return { userId: payload.userId }; // ✅ Must match resolvers
+      } catch (err) {
+        console.error("JWT Error:", err.message);
+      }
+    }
+    return {}; // No userId
+  },
     })
   );
 

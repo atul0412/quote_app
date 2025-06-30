@@ -5,6 +5,11 @@ export default function Navbar() {
   const token = localStorage.getItem("token")
   const navigate = useNavigate() // ✅
 
+  const handleLogout = ()=>{
+     localStorage.removeItem("token")
+     navigate("/login")
+  }
+
   return (
     <div>
       <nav>
@@ -17,10 +22,7 @@ export default function Navbar() {
                   <li><Link to='/profile'>profile</Link></li>
                   <li><Link to='/create'>create</Link></li>
                   <li>
-                    <button className="red btn" onClick={() => {
-                      localStorage.removeItem("token")
-                      navigate("/login") // ✅ correct
-                    }}>
+                    <button className="red btn" onClick={() => handleLogout()}>
                       logout
                     </button>
                   </li>
