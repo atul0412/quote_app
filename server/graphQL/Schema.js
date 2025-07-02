@@ -10,11 +10,14 @@ const typeDefs = gql`
   }
 
   type QuoteWithName {
+    _id: ID!
     text: String
-    author: IdName
+    author: IDName
+     comments: [Comment!]!
+
   }
 
-  type IdName {
+  type IDName {
     _id: String
     name: String
   }
@@ -28,9 +31,18 @@ const typeDefs = gql`
   }
 
   type Quote {
+    _id: ID!
     text: String
     author: ID!
+    comments: [Comment]
   }
+  type Comment {
+    _id: ID!
+    text: String!
+    author: User!
+    quote: Quote!
+    createdAt: String!
+  } 
 
   type Token {
     token: String!
@@ -40,6 +52,7 @@ const typeDefs = gql`
     signupUser(UserNew: UserInput!): User
     loginUser(userLogin: userLoginInput!): Token
     createQuote(text: String!): String
+    createComment(input: CommentInput!): Comment!
   }
   input UserInput {
     name: String!
@@ -49,6 +62,10 @@ const typeDefs = gql`
   input userLoginInput {
     email: String!
     password: String!
+  }
+  input CommentInput {
+  text: String!
+  quoteId: ID!
   }
 `;
 

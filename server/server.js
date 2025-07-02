@@ -29,22 +29,23 @@ const server = new ApolloServer({
 async function startServer() {
   await server.start();
 
-    app.use(
+  app.use(
     cors(),
     express.json(),
-    expressMiddleware(server, {  context: ({ req }) => {
-    const auth = req.headers.authorization || "";
-    const token = auth.split(" ")[1]; // "Bearer <token>"
-    if (token) {
-      try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        return { userId: payload.userId }; // ✅ Must match resolvers
-      } catch (err) {
-        console.error("JWT Error:", err.message);
-      }
-    }
-    return {}; // No userId
-  },
+    expressMiddleware(server, {
+      context: ({ req }) => {
+        const auth = req.headers.authorization || "";
+        const token = auth.split(" ")[1]; // "Bearer <token>"
+        if (token) {
+          try {
+            const payload = jwt.verify(token, process.env.JWT_SECRET);
+            return { userId: payload.userId }; // ✅ Must match resolvers
+          } catch (err) {
+            console.error("JWT Error:", err.message);
+          }
+        }
+        return {}; // No userId
+      },
     })
   );
 

@@ -5,22 +5,32 @@ const jwt = require("jsonwebtoken");
 // Models
 const User = require("../models/user");
 const Quote = require("../models/Quotes");
-
-// A map of functions which return data for the schema.
+const Comment = require('../models/Comment')
 const resolvers = {
   Query: {
     users: async () => await User.find({}),
     user: async (_, { _id }) => await User.findById(_id),
     quotes: async () => await Quote.find({}).populate("author", "_id name"),
     quote: async (_, { author }) => await Quote.find({ author }),
-    myProfile:async(_,args,{userId})=>{
-        if (!userId) throw new Error("User not logged in")
-          return await User.findOne({_id:userId})
+    myProfile: async (_, args, { userId }) => {
+      if (!userId) throw new Error("User not logged in")
+      return await User.findOne({ _id: userId })
     }
   },
 
   User: {
     quotes: async (ur) => await Quote.find({ author: ur._id }),
+  },
+  Quote: {
+    comments: async (quote) => {
+      return await Comment.find({ quote: quote._id }).populate("author", "name");
+    },
+  },
+  QuoteWithName: {
+    comments: async (parent) => {
+      const comments = await Comment.find({ quoteId: parent._id }).populate("author")
+      return comments || [] // ✅ Ensure it never returns null
+    }
   },
 
   Mutation: {
@@ -54,10 +64,7 @@ const resolvers = {
       if (!isMatch) {
         throw new Error("Incorrect password");
       }
-
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "12h" }); // or "7d"
 
       return { token };
     },
@@ -77,6 +84,17 @@ const resolvers = {
       } catch (err) {
         throw new Error(err.message || "Failed to create quote");
       }
+    },
+    createComment: async (_, { input }, { userId }) => {
+      if (!userId) throw new Error("Unauthorized");
+
+      const newComment = new Comment({
+        text: input.text,
+        quote: input.quoteId,
+        author: userId,
+      });
+
+      return await newComment.save();
     },
   },
 };
