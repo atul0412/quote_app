@@ -10,12 +10,32 @@ const resolvers = {
   Query: {
     users: async () => await User.find({}),
     user: async (_, { _id }) => await User.findById(_id),
-    quotes: async () => await Quote.find({}).populate("author", "_id name"),
-    quote: async (_, { author }) => await Quote.find({ author }),
+    quotes: async () =>
+      await Quote.find({})
+        .populate("author", "_id name")
+        .populate({
+          path: "comments",
+          populate: {
+            path: "author",
+            select: "_id name",
+          },
+        }),
+
+    quote: async (_, { author }) =>
+      await Quote.find({ author })
+        .populate("author", "_id name")
+        .populate({
+          path: "comments",
+          populate: {
+            path: "author",
+            select: "_id name",
+          },
+        }),
+
     myProfile: async (_, args, { userId }) => {
-      if (!userId) throw new Error("User not logged in")
-      return await User.findOne({ _id: userId })
-    }
+      if (!userId) throw new Error("User not logged in");
+      return await User.findOne({ _id: userId });
+    },
   },
 
   User: {
@@ -23,14 +43,17 @@ const resolvers = {
   },
   Quote: {
     comments: async (quote) => {
-      return await Comment.find({ quote: quote._id }).populate("author", "name");
+      return await Comment.find({ quote: quote._id }).populate(
+        "author",
+        "name"
+      );
     },
   },
   QuoteWithName: {
     comments: async (parent) => {
-      const comments = await Comment.find({ quoteId: parent._id }).populate("author")
-      return comments || [] // ✅ Ensure it never returns null
-    }
+    const comments = await Comment.find({ quote: parent._id }).populate("author");
+    return comments || [];
+  },
   },
 
   Mutation: {
@@ -64,7 +87,9 @@ const resolvers = {
       if (!isMatch) {
         throw new Error("Incorrect password");
       }
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "12h" }); // or "7d"
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "12h",
+      }); // or "7d"
 
       return { token };
     },
@@ -88,13 +113,19 @@ const resolvers = {
     createComment: async (_, { input }, { userId }) => {
       if (!userId) throw new Error("Unauthorized");
 
-      const newComment = new Comment({
-        text: input.text,
-        quote: input.quoteId,
-        author: userId,
-      });
+     const comment = await Comment.create({
+      text: input.text,
+      author: userId,
+      quote: input.quoteId
+    });
+    
+     await Quote.findByIdAndUpdate(
+      input.quoteId,
+      { $push: { comments: comment._id } },
+      { new: true }
+    );
 
-      return await newComment.save();
+    return comment;
     },
   },
 };

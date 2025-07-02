@@ -26,11 +26,12 @@ export default function Home() {
                 <h6>Comments:</h6>
                 {
                   quote.comments?.length > 0 ? (
-                    quote.comments.map((comment) => (
+                    quote.comments.map(comment => (
                       <p key={comment._id}>
-                        <strong>{comment.author.name}:</strong> {comment.text}
+                        <strong>{comment.author?.name ?? 'Unknown'}:</strong> {comment.text}
                       </p>
                     ))
+
                   ) : (
                     <p>No comments yet.</p>
                   )
